@@ -72,9 +72,19 @@
     );
 
     socket.addEventListener('message', e => {
-      const { id, x, y } = JSON.parse(e.data);
-      my_id = id;
-      my_pos = { x, y };
+      const msg = JSON.parse(e.data);
+
+      if (msg.type === 'welcome') {
+        my_id = msg.id;  // ✅ 只在 welcome 中设置自己的 id
+        return;
+      }
+
+      const { id, x, y, type } = msg;
+      if (type === 'leave') {
+        users.delete(id);
+        return;
+      }
+
       if (!users.has(id)) {
         users.set(id, { color: randomColor(), trail: [], x, y });
       } else {
@@ -84,6 +94,8 @@
     });
 
     document.addEventListener('mousemove', e => {
+      my_pos.x = e.clientX;
+      my_pos.y = e.clientY;
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ x: e.clientX, y: e.clientY }));
       }

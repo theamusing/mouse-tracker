@@ -12,6 +12,7 @@ wss.on('connection', (ws) => {
   const id = uuidv4();
   clients.set(ws, id);
 
+  ws.send(JSON.stringify({ type: 'welcome', id }));
   ws.on('message', (message) => {
     try {
       const { x, y } = JSON.parse(message);
@@ -28,6 +29,12 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     clients.delete(ws);
+    const leaveMsg = JSON.stringify({ type: 'leave', id });
+    for (const client of clients.keys()) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(leaveMsg);
+      }
+    }
   });
 });
 
