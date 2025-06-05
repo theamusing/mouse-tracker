@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Mouse Tracker</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: #111;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const users = new Map();
+
+    function randomColor() {
+      return `hsl(${Math.random() * 360}, 100%, 60%)`;
+    }
+
+    function draw() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (const [id, user] of users) {
+        ctx.beginPath();
+        ctx.fillStyle = user.color;
+        ctx.arc(user.x, user.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        user.trail.push({ x: user.x, y: user.y });
+        if (user.trail.length > 20) user.trail.shift();
+
+        ctx.beginPath();
+        ctx.moveTo(user.trail[0].x, user.trail[0].y);
+        for (let i = 1; i < user.trail.length; i++) {
+          const p = user.trail[i];
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = user.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    let socket = new WebSocket("ws://localhost:8080");
+
+    socket.addEventListener('message', e => {
+      const { id, x, y } = JSON.parse(e.data);
+      if (!users.has(id)) {
+        users.set(id, { color: randomColor(), trail: [], x, y });
+      } else {
+        users.get(id).x = x;
+        users.get(id).y = y;
+      }
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ x: e.clientX, y: e.clientY }));
+      }
+    });
+  </script>
+</body>
+</html>
