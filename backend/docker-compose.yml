@@ -1,9 +1,8 @@
-version: '3.8'
+version: "3"
 
 services:
   mouse-server:
     build: .
-    container_name: mouse-tracker
-    restart: unless-stopped
     ports:
       - "8080:8080"
+    restart: unless-stopped
