@@ -1,21 +1,10 @@
 const http = require('http');
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
-const path = require('path');
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/index.html') {
-    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(html);
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-});
+const server = http.createServer();
 
-const wss = new WebSocket.Server({ server }); // 不限制路径
+const wss = new WebSocket.Server({ server, path: '/mouse' });
 
 const clients = new Map();
 
@@ -44,5 +33,5 @@ wss.on('connection', (ws) => {
 
 const PORT = 8080;
 server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`WebSocket server is listening on ws://localhost:${PORT}/mouse`);
 });
