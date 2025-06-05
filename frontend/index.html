@@ -21,6 +21,8 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    var my_id = -1; // Placeholder for local user ID
+    var my_pos = { x: 0, y: 0 };
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -34,12 +36,17 @@
       ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       for (const [id, user] of users) {
+        let pos = { x: user.x, y: user.y };
+        if (id === my_id) // use local position for the current user
+        {
+          pos = my_pos;
+        }
         ctx.beginPath();
         ctx.fillStyle = user.color;
-        ctx.arc(user.x, user.y, 5, 0, 2 * Math.PI);
+        ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
         ctx.fill();
 
-        user.trail.push({ x: user.x, y: user.y });
+        user.trail.push({ x: pos.x, y: pos.y });
         if (user.trail.length > 20) user.trail.shift();
 
         ctx.beginPath();
@@ -66,6 +73,8 @@
 
     socket.addEventListener('message', e => {
       const { id, x, y } = JSON.parse(e.data);
+      my_id = id;
+      my_pos = { x, y };
       if (!users.has(id)) {
         users.set(id, { color: randomColor(), trail: [], x, y });
       } else {
